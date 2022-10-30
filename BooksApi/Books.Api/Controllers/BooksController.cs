@@ -1,3 +1,4 @@
+using Books.Api.Services;
 using Books.Domain;
 using Books.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -9,10 +10,12 @@ namespace Books.Api.Controllers
     public class BooksController : ControllerBase
     {
         private readonly ILogger<BooksController> _logger;
+        private readonly IBooksService _booksService;
 
-        public BooksController(ILogger<BooksController> logger)
+        public BooksController(ILogger<BooksController> logger, IBooksService booksService)
         {
             _logger = logger;
+            _booksService = booksService;
         }
 
         /// <summary>
@@ -24,7 +27,9 @@ namespace Books.Api.Controllers
         [HttpPost]
         public IActionResult CreateBook([FromBody] Book body)
         {
-            throw new NotImplementedException();
+            var id = _booksService.CreateBook(body);
+
+            return new ObjectResult(id) { StatusCode = 201 };
         }
 
         /// <summary>
@@ -33,9 +38,9 @@ namespace Books.Api.Controllers
         /// <param name="sortby"></param>
         /// <response code="200">Success</response>
         [HttpGet]
-        public IActionResult GetBook([FromQuery] SortBy sortby)
+        public IActionResult GetBook([FromQuery] SortBy? sortby)
         {
-            throw new NotImplementedException();
+            return new OkObjectResult(_booksService.GetBooks(sortby));
         }
 
         /// <summary>
@@ -47,9 +52,16 @@ namespace Books.Api.Controllers
         /// <response code="400">Bad Request</response>
         /// <response code="404">Book not found</response>
         [HttpPut("{id}")]
-        public IActionResult UpdateBookById(int id, [FromBody] Book body)
+        public IActionResult UpdateBookById(ulong id, [FromBody] Book body)
         {
-            throw new NotImplementedException();
+            var book = _booksService.UpdateBookById(id, body);
+
+            if (book == null)
+            {
+                return new NotFoundResult();
+            }
+
+            return new OkObjectResult(book);
         }
 
         /// <summary>
@@ -59,9 +71,16 @@ namespace Books.Api.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Book not found</response>
         [HttpGet("{id}")]
-        public IActionResult GetBookById(int id)
+        public IActionResult GetBookById(ulong id)
         {
-            throw new NotImplementedException();
+            var book = _booksService.GetBookById(id);
+
+            if (book == null)
+            {
+                return new NotFoundResult();
+            }
+
+            return new OkObjectResult(book);
         }
 
         /// <summary>
@@ -71,9 +90,14 @@ namespace Books.Api.Controllers
         /// <response code="200">Success</response>
         /// <response code="404">Book not found</response>
         [HttpDelete("{id}")]
-        public IActionResult DeleteBookById(int id)
+        public IActionResult DeleteBookById(ulong id)
         {
-            throw new NotImplementedException();
+            if (_booksService.DeleteBookById(id))
+            {
+                return new OkResult();
+            }
+
+            return new NotFoundResult();
         }
     }
 }
